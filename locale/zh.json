@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Tavern SQLite V1（数据库与干净回退）",
+    "description": "SQLite会话/聊天/变量与物理尾回退；卡脚本和MVU由作者浏览器执行器运行。"
+  }
+}
