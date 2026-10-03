@@ -15,18 +15,22 @@
 
 ## 安装
 
-已有兼容酒馆时：
+已有兼容CLI酒馆时，无需在命令里填写版本号或目录：
 
 ```sh
-curl -fsSL https://github.com/huajiao1998/dsh-tavern-sqlite-v1/releases/download/v0.1.0/install.sh | sh -s -- install --home /绝对路径/酒馆安装根目录
+curl -fsSL https://github.com/huajiao1998/dsh-tavern-sqlite-v1/releases/latest/download/install.sh | sh
 ```
+
+自动从`DSH_TAVERN_CLI_HOME`、`DSH_HOME`、当前目录和`~/.dsh-tavern`识别既有酒馆；找不到或有多个时才需`--home`，不会扫描全盘或猜实例。当前不支持Desktop，不能添加上游的`DSH_TAVERN_HOST=desktop`来冒充支持。
+
+`latest`随最新正式Release更新，用户命令不变；只推main源码不会发布新版本。下载的SH内部锁定同次发行包和SHA256，防止版本混装。已有本地包优先，已装再执行不自动升级；升级需先用所属代卸载，再使用新发行包安装。
 
 本地包优先、缺包才下载固定发行附件并验证SHA256；不自动安装宿主、无需网页凭证、不运行安装脚本、不扫描或复制存档。完整参数和卸载方式见[安装说明](<deploy/INSTALL.md>)。安装前请自行做好备份并停止交互。
 
 ## 卸载
 
 ```sh
-sh install.sh uninstall --home /绝对路径/酒馆安装根目录
+curl -fsSL https://github.com/huajiao1998/dsh-tavern-sqlite-v1/releases/latest/download/install.sh | sh -s -- uninstall
 ```
 
 原来运行则按原方式恢复，原来停止则保持停止。早期认证版须显式指定新的本地包作执行器，详安装说明；不将SQLite存档退回JSON。
