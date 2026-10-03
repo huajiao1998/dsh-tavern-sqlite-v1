@@ -65,4 +65,4 @@ curl -fsSL https://raw.githubusercontent.com/huajiao1998/dsh-tavern-sqlite-v1/ma
 curl -fsSL https://raw.githubusercontent.com/huajiao1998/dsh-tavern-sqlite-v1/main/install.sh | sh
 ```
 
-获取SH本身需要网络；已有本地包时SH后续不访问网络。缺包下载时间不计入安装预算，下载完成后解包、预检、装包、必要停启及基础验收必须共享60秒预算。发行包与源码见本仓库的GitHub Release。
+获取SH本身需要网络；已有本地包时SH后续不访问网络。缺包下载时间不计入安装预算，下载完成后解包、预检、装包、必要停启及基础验收必须共享60秒预算。已公开发行的用户入口见上面的latest地址。

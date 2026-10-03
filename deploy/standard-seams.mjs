@@ -30,6 +30,7 @@ import { applyRollbackHostTransform, applyTemplateQuiescenceTransform, applyCand
 import { applyBackgroundTaskRollbackTransform, applyBackgroundHostRollbackTransform } from './background-rollback-transform.mjs'
 
 import { clientCoreWrites } from './client-seams.mjs'
+import { applyForkHistoryTransform } from './fork-history-transform.mjs'
 
 const RECORD = '.tavern-standard-seams.json'
 const DOMAIN = 'tavern-plugin/lib/domain/'
@@ -43,7 +44,7 @@ const TARGETS = [
   ...['chat-sqlite-store.js', 'tavern-conversation-registry.js', 'conversation-initialization.js', 'session-view-reader.js',
     'legacy-view-seams.js', 'round-history.js', 'story-timeline.js', 'model-error-presentation.js', 'tavern-script-host-adapter.js', 'tavern-script-dispatch.js',
     'server-template-runtime.js', 'conversation-fork-point.js', 'chat-history-rescue.js',
-    'storage-browser-rollback.js', 'storage-rollback.js', 'storage-budgets.js', 'storage-package.js',
+    'storage-fork-history.js', 'storage-browser-rollback.js', 'storage-rollback.js', 'storage-budgets.js', 'storage-package.js',
     'storage-current-variables.js', 'storage-compaction-warning.js', 'read-variables.js', 'storage-rollback-business.js', 'turn-orchestration.js', 'settlement-jobs.js', 'foreground-handoff.js', 'server-template-sync.js', 'candidate-worldbook-preparation.js', 'auto-compaction.js', 'chat-session-state.js', 'card-summary-cache.js', 'worldbook-library.js', 'file-resources.js'].map(name => DOMAIN + name),
   '.tavern-seams.json', '.tavern-legacy-view-seams.json', '.tavern-save-ui-seam.json',
 ]
@@ -152,6 +153,8 @@ function buildCore(appDir) {
   write.set(DOMAIN + 'storage-rollback.js', shim("import { storagePackage } from './storage-package.js'\nimport { sessionEvents } from './session-events.js'\nconst impl = await storagePackage('rollback-cleanup')\nimpl.configureRollbackCleanup({ sessionEvents })\nexport const { cleanupAfterRollback, cleanupRollbackHeadIndex, preflightRollback, preflightRollbackAtSeq, cleanupAfterRollbackAtSeq } = impl\nexport const { cleanRollback } = await storagePackage('clean-rollback')\n"))
   write.set(DOMAIN + 'conversation-fork-point.js', shim("import { storagePackage } from './storage-package.js'\nimport { isRescuedHistoryMessage } from './chat-history-rescue.js'\nimport { assistantResultForTurn } from './session-turn-result.js'\nimport { sessionEvents } from './session-events.js'\nimport { assertConversationForkable } from './conversation-fork.js'\nconst impl = await storagePackage('conversation-fork-point')\nimpl.configureConversationForkPoint({ isRescuedHistoryMessage, assistantResultForTurn, sessionEvents, assertConversationForkable })\nexport const { conversationStateAtTurn, conversationForkBoundary } = impl\n"))
   write.set(DOMAIN + 'chat-history-rescue.js', shim("import { storagePackage } from './storage-package.js'\nexport const { rescueHistoryInput, isRescuedHistoryMessage, assertRescueHistoryEditable, rescueHistoryNotice } = await storagePackage('chat-history-rescue')\n"))
+  write.set(DOMAIN + 'storage-fork-history.js', shim("import { storagePackage } from './storage-package.js'\nexport const { normalizeForkHistoryMarkers } = await storagePackage('fork-history-markers')\n"))
+  write.set('tavern-plugin/lib/index.js', applyForkHistoryTransform(write.get('tavern-plugin/lib/index.js')))
   // 新版Chat协议shim必须逐字更新，不能只凭首行标记跳过旧副本。
   write.set(DOMAIN + 'chat-sqlite-store.js', readFileSync(new URL('./chat-sqlite-store.shim.js', import.meta.url), 'utf8'))
   return write
@@ -183,6 +186,7 @@ export function applyStandardSeams({ appDir, authorVersion } = {}) {
     // 原S1/S2/legacy/UI会修改相同入口和客户端；核心转换必须用刚施缝的当前源码。
     core.set('tavern-plugin/lib/index.js', applyRollbackBodyCommitHostTransform(applyRollbackBodySignalHostTransform(applyRollbackSharedBranchHostTransform(applyRollbackWorldbookBindingsHostTransform(applyRollbackWorldbookHostTransform(applyRollbackCharacterHostTransform(applyRollbackBackgroundOwnerHostTransform(applyRollbackGlobalHostTransform(applyRollbackHostTransform(applyBackgroundHostRollbackTransform(applyCompactionWarningTransform(applyHostTransform(text(appDir, 'tavern-plugin/lib/index.js'))))))))))))))
     core.set('tavern-plugin/lib/index.js', applyRollbackSyncHostTransform(applyBrowserRpcGuardTransform(core.get('tavern-plugin/lib/index.js'))))
+    core.set('tavern-plugin/lib/index.js', applyForkHistoryTransform(core.get('tavern-plugin/lib/index.js')))
     for (const [rel,body] of clientCoreWrites(appDir, {browserWrite:applyBrowserWriteLifecycleTransform})) core.set(rel,body)
     for (const [rel, body] of core) {
       const target = inside(appDir, rel)

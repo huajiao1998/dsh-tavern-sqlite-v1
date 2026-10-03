@@ -1,6 +1,6 @@
 {
   "name": "dsh-tavern-storage-sqlite-v1",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "V1方案B：SQLite数据库与干净回退；MVU和卡脚本使用作者2.4浏览器执行器，不接管执行兼容",
@@ -36,6 +36,7 @@
     "./read-variables": "./lib/read-variables.js",
     "./budgets": "./lib/budgets.js",
     "./conversation-fork-point": "./lib/conversation-fork-point.js",
+    "./fork-history-markers": "./lib/fork-history-markers.js",
     "./chat-history-rescue": "./lib/chat-history-rescue.js",
     "./standard-host": "./lib/standard-host.js",
     "./variable-archive": "./lib/variable-archive.js",
