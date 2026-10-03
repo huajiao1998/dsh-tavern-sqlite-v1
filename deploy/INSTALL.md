@@ -9,12 +9,12 @@ macOS、Linux、WSL2的CLI酒馆；已有作者2.4.0应用树和DSH/boot 0.1.5-r
 ## 一键安装（用户无需填写版本或目录）
 
 ```sh
-curl -fsSL https://github.com/huajiao1998/dsh-tavern-sqlite-v1/releases/latest/download/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/huajiao1998/dsh-tavern-sqlite-v1/main/install.sh | sh
 ```
 
 安装器从`DSH_TAVERN_CLI_HOME`、`DSH_HOME`、当前目录、`~/.dsh-tavern`识别既有CLI酒馆；只有找不到或存在多个时才需`--home`明确选择，不扫描全盘。当前不支持Desktop，不能照搬上游`DSH_TAVERN_HOST=desktop`。
 
-入口地址固定，最新正式Release发布后命令不变；每份SH内部仍锁定同代tgz和SHA256，不把最新SH配任意包。只推main不发布Release不会更新安装版本；已有本地包优先，已装再执行不会静默升级。修改代码不应覆盖旧tag/附件，即使忘改SemVer也必须使用新发行tag，构建器通过`--tag`可显式指定；正常发行应递增package.version，SH版本由构建器读取它，不再另手改脚本常量。
+仓库根目录install.sh是稳定引导入口，先完整下载最新正式Release的SH再透传参数，下载失败或为空不执行。入口地址固定，最新正式Release发布后命令不变；每份SH内部仍锁定同代tgz和SHA256，不把最新SH配任意包。只推main不发布Release不会更新安装版本；已有本地包优先，已装再执行不会静默升级。修改代码不应覆盖旧tag/附件，即使忘改SemVer也必须使用新发行tag，构建器通过`--tag`可显式指定；正常发行应递增package.version，SH版本由构建器读取它，不再另手改脚本常量。
 
 ## 本地安装（可选指定目录）
 
@@ -44,7 +44,7 @@ sh install.sh install --home /绝对路径/酒馆安装根目录 --package ./dsh
 ## 卸载
 
 ```sh
-curl -fsSL https://github.com/huajiao1998/dsh-tavern-sqlite-v1/releases/latest/download/install.sh | sh -s -- uninstall
+curl -fsSL https://raw.githubusercontent.com/huajiao1998/dsh-tavern-sqlite-v1/main/install.sh | sh -s -- uninstall
 ```
 
 使用本地已安装的所属代代码与恢复记录，不下载新版本。早期已安装代仍是认证版执行器时，新SH的安装/卸载均不会静默调用它；需显式`--package`指定新的本地离线包作为卸载执行器，保留确切旧包用于失败恢复。未安装时无变更返回。安装不同代不会自动升级，须先卸载旧代。
@@ -62,7 +62,7 @@ curl -fsSL https://github.com/huajiao1998/dsh-tavern-sqlite-v1/releases/latest/d
 发布者在独立公开仓库上传`install.sh`、固定版本tgz与`SHA256SUMS`，三者由构建工具同一代生成。必须先配置真实owner/repo，未配置时本地安装可用、缺包下载明确拒绝，不猜地址。用户入口形态：
 
 ```sh
-curl -fsSL https://github.com/huajiao1998/dsh-tavern-sqlite-v1/releases/latest/download/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/huajiao1998/dsh-tavern-sqlite-v1/main/install.sh | sh
 ```
 
 获取SH本身需要网络；已有本地包时SH后续不访问网络。缺包下载时间不计入安装预算，下载完成后解包、预检、装包、必要停启及基础验收必须共享60秒预算。发行包与源码见本仓库的GitHub Release。

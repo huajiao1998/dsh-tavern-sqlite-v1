@@ -35,5 +35,5 @@ const digest = createHash('sha256').update(fs.readFileSync(path.join(out, tarbal
 const url = values.repository ? `https://github.com/${values.repository}/releases/download/${tag}/${tarball}` : '__DSH_RELEASE_URL__'
 fs.writeFileSync(path.join(out, 'install.sh'), embedded.replace('__DSH_RELEASE_URL__', url).replace('__DSH_RELEASE_SHA256__', digest), 'utf8')
 fs.writeFileSync(path.join(out, 'SHA256SUMS'), digest + '  ' + tarball + '\n', 'utf8')
-fs.writeFileSync(path.join(out, 'release.json'), JSON.stringify({ package: pkg.name, version: pkg.version, repository: values.repository || null, tag, asset: tarball, sha256: digest, published: false, command: values.repository ? `curl -fsSL https://github.com/${values.repository}/releases/latest/download/install.sh | sh` : null }, null, 2) + '\n', 'utf8')
+fs.writeFileSync(path.join(out, 'release.json'), JSON.stringify({ package: pkg.name, version: pkg.version, repository: values.repository || null, tag, asset: tarball, sha256: digest, published: false, command: values.repository ? `curl -fsSL https://raw.githubusercontent.com/${values.repository}/main/install.sh | sh` : null }, null, 2) + '\n', 'utf8')
 console.log(JSON.stringify({ out, asset: tarball, sha256: digest, repositoryConfigured: !!values.repository, uploaded: false }))
