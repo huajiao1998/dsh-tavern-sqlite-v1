@@ -357,10 +357,11 @@ export default class TavernSessionPersistence extends JsonlSessionPersistence {
 		await this.drainOpenHandles(id)
 		const db = this.store.openExisting(id), stored = db?.readAll()
 		if (!stored) throw new SessionPersistenceNotFoundError(id)
-		const { Session } = requireFrom('dsh-session/lib/index.js')
-		const events = structuredClone(stored.events)
-		persistMod.validateStoredEvents(stored.header, structuredClone(events))
-		const session = Session.fromRestore(id, events, stored.header, stored.inheritedEventCount, 'detached')
+		// 使用已装共享补丁的同一验证/构造器；不能绕回stock词汇，也不忽略必需扩展事件。
+		const patch = this[Symbol.for('dsh-tavern.host-session-patch.v1')]
+		if (patch?.serverReady !== true || typeof patch.restoreStoredSession !== 'function') throw new Error('冷会话恢复缺少已就绪的酒馆宿主补丁，拒绝用原生词汇猜测读取')
+		const session = patch.restoreStoredSession(stored)
+		if (session?.id !== id) throw new Error('冷会话恢复身份不一致')
 		// rc.2构造器会追加未发布的end-seed；删掉仅在内存生成的后缀，不把它落库。
 		rewindSessionMemory(session, stored.events.length)
 		return session

@@ -1,6 +1,6 @@
 {
   "name": "dsh-tavern-storage-sqlite-v1",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "type": "module",
   "description": "V1方案B：SQLite数据库与干净回退；MVU和卡脚本使用作者2.4浏览器执行器，不接管执行兼容",
