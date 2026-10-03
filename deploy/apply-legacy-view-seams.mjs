@@ -82,6 +82,7 @@ function upgradeSaveActions(source) {
   // 显式释放 RPC（2026-10-01）：只对 complete + 目标确证 missing 生效（实现见 lib/legacy-view-seams.js release）。
   // 守卫式追加：老树（只有 claim 的形态）就地升级；**不**加入上面 v3 必填串，否则老树会先报"实现不完整"而无法升级。
   if (!out.includes("case 'sqliteSaveRelease':")) out = replace(out, "      case 'sqliteSaveClaim': return await ctx.get('tavernSaveActions').claim(args)", "      case 'sqliteSaveClaim': return await ctx.get('tavernSaveActions').claim(args)\n      case 'sqliteSaveRelease': return await ctx.get('tavernSaveActions').release(args)", '显式释放已完成关系 RPC')
+  if (!out.includes("case 'sqliteSaveRecover':")) out = replace(out, "      case 'sqliteSaveRelease': return await ctx.get('tavernSaveActions').release(args)", "      case 'sqliteSaveRelease': return await ctx.get('tavernSaveActions').release(args)\n      case 'sqliteSaveRecover': return await ctx.get('tavernSaveActions').recover(args)", '同冻结SID恢复 RPC')
   return out
 }
 

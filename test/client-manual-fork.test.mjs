@@ -36,7 +36,7 @@ function harness(options = {}) {
   }
   const fetch = async (url, request) => {
     const method = url.split('/').at(-1), body = JSON.parse(request.body)
-    assert.match(method, /^sqliteSave(Status|Prepare|Claim|Complete|Release)$/)
+    assert.match(method, /^sqliteSave(Status|Prepare|Claim|Complete|Recover|Release)$/)
     assert.equal(request.method, 'POST'); assert.equal(request.headers['Content-Type'], 'application/json')
     assert.ok(request.signal instanceof AbortSignal)
     trace.push({ kind: method, body })
@@ -49,7 +49,7 @@ function harness(options = {}) {
     if (method === 'sqliteSaveStatus') result = status
     if (method === 'sqliteSavePrepare') result = plan
     if (method === 'sqliteSaveClaim') { result = claim; status = { ...status, pending: true } }
-    if (method === 'sqliteSaveComplete') {
+    if (method === 'sqliteSaveComplete' || method === 'sqliteSaveRecover') {
       result = { ...database, sessionId: target, chatId: 'chat-target', ...options.complete }
       status = { ...status, forked: true, pending: false }
     }
@@ -137,6 +137,15 @@ for (const status of [database, { ...database, readonly: true }, { readonly: fal
   assert.equal(x.trace.length, 1); x.close()
 }
 
+// 整页重载后仅用Host确认的bound/created冻结目标恢复；claimed未知继续拒绝。
+for (const state of ['bound','created']) {
+  const x=harness({status:{...original,pending:true,recoverable:true,targetInfo:{state,targetSessionId:target}}})
+  x.render();await x.settle();assert.equal(x.button().props.disabled,false);assert.match(x.text(),/重试完成已有分叉/)
+  await x.button().props.onClick();await x.settle();assert.deepEqual(x.trace.map(row=>row.kind),['sqliteSaveStatus','sqliteSaveRecover','open']);assert.equal(x.trace[1].body.targetSessionId,target);x.close()
+}
+for (const targetInfo of [{state:'claimed',targetSessionId:target},{state:'bound',targetSessionId:''},{state:'bound',targetSessionId:'session-source'}]) {
+  const x=harness({status:{...original,pending:true,recoverable:true,targetInfo}});x.render();await x.settle();assert.equal(x.button().props.disabled,true);x.close()
+}
 // 分段失败不得open，也不自动fork；已知SID允许同token重试，未知SID禁再次创建。
 for (const failAt of ['sqliteSaveStatus', 'sqliteSavePrepare', 'sqliteSaveClaim', 'fork', 'sqliteSaveComplete']) {
   const x = harness({ failAt }); x.render(); await x.settle()

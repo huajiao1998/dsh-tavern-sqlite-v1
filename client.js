@@ -12,7 +12,8 @@ window.__ModuleLoader__.load({
       description: '原档只读，保留原档并创建独立的数据库分叉后继续游玩。',
       migrate: '分叉迁移到数据库存档', busy: '正在创建独立分叉…',
       done: '已创建数据库分叉', created: '原档保持只读，已创建的独立数据库分叉可从侧栏打开。',
-      pending: '分叉尚未完成，请勿重复创建；结果未知或重载后请人工核实，不能重新分叉。',
+      pending: '分叉尚未完成；未确认原生分叉身份时请人工核实，不要重复创建。',
+      recoverable: '已有分叉身份已安全保存。点击下方按钮完成这个分叉，不会创建第二个会话。',
       uncertain: '操作结果尚未确认，请核实已有分叉，不要重新创建。',
       retry: '重试完成已有分叉', failed: '失败', unavailable: '未接线',
       missing: '已记录的分叉目标已不存在（可能已被删除），旧记录仍标记为已完成，因此不能直接重新分叉。',
@@ -92,7 +93,10 @@ window.__ModuleLoader__.load({
       }, [sessionId])
       const result = state.result
       const known = attempts.get(sessionId)
-      const retry = !!known?.targetSessionId && !known.done
+      const persistentRetry = !known && result?.recoverable === true && result?.pending === true
+        && ['bound', 'created'].includes(result?.targetInfo?.state)
+        && !!result?.targetInfo?.targetSessionId && result.targetInfo.targetSessionId !== sessionId
+      const retry = (!!known?.targetSessionId && !known.done) || persistentRetry
       const canAct = state.phase === 'ready' && isOriginal(result) && result.forked === false
         && (!known || retry) && (result.pending === false || (result.pending === true && retry))
       // 释放门（严格 fail-closed）：只认后端权威组合 —— 仍是只读原档 + forked=true + pending=false
@@ -112,6 +116,14 @@ window.__ModuleLoader__.load({
         let attempt = attempts.get(sessionId)
         try {
           if (!sessionsRef || typeof sessionsRef.fork !== 'function' || typeof sessionsRef.open !== 'function') throw new Error('当前宿主缺少原生分叉/打开服务')
+          if (persistentRetry) {
+            const target = result.targetInfo.targetSessionId
+            const completed = await saveRpc('sqliteSaveRecover', { targetSessionId: target }, sessionId)
+            if (!isDatabase(completed) || completed.sessionId !== target || !completed.chatId || completed.chatId === result.chatId) throw new Error('恢复回执未确认独立的数据库目标')
+            if (mounted.current) setState({ phase: 'ready', result: { ...result, forked: true, pending: false }, error: '' })
+            if (active) await sessionsRef.open(completed.sessionId)
+            return
+          }
           if (!attempt?.targetSessionId) {
             if (attempt) throw new Error(translate('uncertain'))
             const plan = await saveRpc('sqliteSavePrepare', {}, sessionId)
@@ -179,6 +191,7 @@ window.__ModuleLoader__.load({
       const description = state.notice || (state.phase === 'reading' ? translate('reading')
         : canRelease ? translate('missing')
         : result?.forked === true ? translate('created')
+        : persistentRetry ? translate('recoverable')
         : result?.pending === true ? translate('pending')
         : known && !known.done && !known.targetSessionId ? translate('uncertain') : translate('description'))
       return h('section', { className: 'dsh-tavern-status-section dsh-sqlite-save', 'aria-busy': busy || releasing },
